@@ -1,4 +1,4 @@
-module github.com/GrantZheng/kit
+module github.com/kujtimiihoxha/kit
 
 go 1.12
 
@@ -16,5 +16,3 @@ require (
 	golang.org/x/tools v0.0.0-20190401163957-4fc9f0bfa59a
 	gopkg.in/yaml.v2 v2.2.2
 )
-
-replace github.com/kujtimiihoxha/kit => github.com/GrantZheng/kit master
