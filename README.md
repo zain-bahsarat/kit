@@ -24,8 +24,12 @@ GoKit Cli needs to be installed using `go get` and `go install` so `Go` is a req
 # Installation
 Before you install please read [prerequisites](#prerequisites)
 ```bash
-go get github.com/GrantZheng/kit
+git clone https://github.com/GrantZheng/kit.git
+cd kit
+go install 
 ```
+:warning: **Notice**: to install package, do not use `go get github.com/GrantZheng/kit`, which could generate kit binary refers to the original repo code. Some methods have been discussed [here](https://stackoverflow.com/questions/54721986/issues-with-go-build-on-forked-repository)，but I haven't found a better way to solve this problem.
+
 # Usage
 ```bash
 kit help
