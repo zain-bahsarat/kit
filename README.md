@@ -9,7 +9,7 @@ This is what `GoKit Cli` is aiming to change.
 
 
 # Prerequisites 
-GoKit Cli needs to be installed using `go get` and `go install` so `Go` is a requirement to be able to test your services
+`Go` is a requirement to be able to test your services
 [gokit](https://github.com/go-kit/kit) is needed.
 
 # Table of Content
