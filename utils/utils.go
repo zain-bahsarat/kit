@@ -171,7 +171,7 @@ func getImportPath(name string, key string) (string, error) {
 
 func getModNameFromModFile(name string) (string, error) {
 	modFile := "go.mod"
-	filePath := name + "/" + modFile
+	filePath := ToLowerSnakeCase(name) + "/" + modFile
 	exists, _ := fs.Get().Exists(filePath)
 	var modFileInParentLevel bool
 	if exists == false {

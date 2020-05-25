@@ -62,16 +62,20 @@ func (g *NewService) Generate() error {
 }
 
 func (g *NewService) genModule() error {
-	exist, _ := g.fs.Exists(g.name + "/go.mod")
+	prjName := utils.ToLowerSnakeCase(g.name)
+	exist, _ := g.fs.Exists(prjName + "/go.mod")
 	if exist {
 		return nil
 	}
 
-	moduleName := g.name
+	moduleName := prjName
 	if viper.GetString("n_s_module") != "" {
 		moduleName = viper.GetString("n_s_module")
+		moduleNameSlice := strings.Split(moduleName, "/")
+		moduleNameSlice[len(moduleNameSlice) - 1] = utils.ToLowerSnakeCase(moduleNameSlice[len(moduleNameSlice) - 1])
+		moduleName = strings.Join(moduleNameSlice, "/")
 	}
-	cmdStr := "cd " + g.name + " && go mod init " + moduleName
+	cmdStr := "cd " + prjName + " && go mod init " + moduleName
 	cmd := exec.Command("sh", "-c", cmdStr)
 	_, err := cmd.Output()
 	return err

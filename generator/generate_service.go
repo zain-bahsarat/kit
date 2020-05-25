@@ -2202,7 +2202,7 @@ func (g *generateCmd) generateCancelInterrupt() {
 	}
 }
 func (g *generateCmd) generateCmdMain() error {
-	mainDest := fmt.Sprintf(viper.GetString("gk_cmd_path_format"), g.name)
+	mainDest := fmt.Sprintf(viper.GetString("gk_cmd_path_format"), utils.ToLowerSnakeCase(g.name))
 	mainFilePath := path.Join(mainDest, "main.go")
 	g.CreateFolderStructure(mainDest)
 	if b, err := g.fs.Exists(mainFilePath); err != nil {
@@ -2210,7 +2210,7 @@ func (g *generateCmd) generateCmdMain() error {
 	} else if b {
 		return nil
 	}
-	cmdSvcImport, err := utils.GetCmdServiceImportPath(g.name)
+	cmdSvcImport, err := utils.GetCmdServiceImportPath(utils.ToLowerSnakeCase(g.name))
 	if err != nil {
 		return err
 	}
