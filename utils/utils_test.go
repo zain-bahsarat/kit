@@ -32,12 +32,12 @@ func TestToUpperFirst(t *testing.T) {
 
 func TestIsExist(t *testing.T) {
 	invalidP := "/@^*(*(&%^&"
-	absoluteExistedP := "c:"
+	existedAbsoluteP := "c:"
 	if runtime.GOOS != "windows" {
-		absoluteExistedP = "/etc"
+		existedAbsoluteP = "/etc"
 	}
 	Convey("Test if IsExist works", t, func() {
 		So(IsExist(invalidP), ShouldEqual, false)
-		So(IsExist(absoluteExistedP), ShouldEqual, true)
+		So(IsExist(existedAbsoluteP), ShouldEqual, true)
 	})
 }
