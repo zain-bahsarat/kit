@@ -22,6 +22,7 @@ type GenerateClient struct {
 	transport        string
 	interfaceName    string
 	destPath         string
+	pbImportPath     string
 	filePath         string
 	serviceDestPath  string
 	serviceFilePath  string
@@ -30,7 +31,7 @@ type GenerateClient struct {
 }
 
 // NewGenerateClient returns a client generator.
-func NewGenerateClient(name string, transport string) Gen {
+func NewGenerateClient(name string, transport, pbImportPath string) Gen {
 	i := &GenerateClient{
 		name:            name,
 		interfaceName:   utils.ToCamelCase(name + "Service"),
@@ -41,6 +42,7 @@ func NewGenerateClient(name string, transport string) Gen {
 	i.serviceFilePath = path.Join(i.serviceDestPath, viper.GetString("gk_service_file_name"))
 	i.filePath = path.Join(i.destPath, viper.GetString("gk_service_file_name"))
 	i.srcFile = jen.NewFilePath(i.destPath)
+	i.pbImportPath = pbImportPath
 	i.InitPg()
 	i.fs = fs.Get()
 	return i
@@ -83,7 +85,7 @@ func (g *GenerateClient) Generate() (err error) {
 			return err
 		}
 	case "grpc":
-		cg := newGenerateGRPCClient(g.name, g.serviceInterface, g.serviceFile)
+		cg := newGenerateGRPCClient(g.name, g.pbImportPath, g.serviceInterface, g.serviceFile)
 		err = cg.Generate()
 		if err != nil {
 			return err
@@ -339,12 +341,13 @@ type generateGRPCClient struct {
 	name             string
 	interfaceName    string
 	destPath         string
+	pbImportPath     string
 	filePath         string
 	serviceInterface parser.Interface
 	serviceFile      *parser.File
 }
 
-func newGenerateGRPCClient(name string, serviceInterface parser.Interface, serviceFile *parser.File) Gen {
+func newGenerateGRPCClient(name, pbImportPath string, serviceInterface parser.Interface, serviceFile *parser.File) Gen {
 	i := &generateGRPCClient{
 		name:             name,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
@@ -354,6 +357,7 @@ func newGenerateGRPCClient(name string, serviceInterface parser.Interface, servi
 	}
 	i.filePath = path.Join(i.destPath, viper.GetString("gk_grpc_client_file_name"))
 	i.srcFile = jen.NewFilePath(i.destPath)
+	i.pbImportPath = pbImportPath
 	i.InitPg()
 	i.fs = fs.Get()
 	return i
@@ -368,7 +372,7 @@ func (g *generateGRPCClient) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	pbImport, err := utils.GetPbImportPath(g.name)
+	pbImport, err := utils.GetPbImportPath(g.name, g.pbImportPath)
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	ps "go/parser"
 	"go/token"
-
 	"strings"
 
 	"strconv"
@@ -65,6 +64,7 @@ func (b *BaseGenerator) getMissingImports(imp []parser.NamedTypeValue, f *parser
 // CreateFolderStructure create folder structure of path
 func (b *BaseGenerator) CreateFolderStructure(path string) error {
 	e, err := b.fs.Exists(path)
+
 	if err != nil {
 		return err
 	}
