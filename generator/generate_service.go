@@ -1800,7 +1800,7 @@ func (g *generateCmd) generateVars() {
 		)
 		g.code.NewLine()
 		g.code.Raw().Var().Id("debugAddr").Op("=").Id("fs").Dot("String").Call(
-			jen.Lit("debug.addr"),
+			jen.Lit("debug-addr"),
 			jen.Lit(":8080"),
 			jen.Lit("Debug and metrics listen address"),
 		)
