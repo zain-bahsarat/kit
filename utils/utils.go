@@ -75,7 +75,10 @@ func GetGRPCTransportImportPath(name string) (string, error) {
 }
 
 // GetPbImportPath returns the import path of the generated service grpc pb.
-func GetPbImportPath(name string) (string, error) {
+func GetPbImportPath(name, pathByFlag string) (string, error) {
+	if pathByFlag != "" {
+		return pathByFlag, nil
+	}
 	return getImportPath(name, "gk_grpc_pb_path_format")
 }
 
@@ -141,6 +144,7 @@ func getImportPath(name string, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if viper.GetString("gk_folder") != "" {
 		pwd += "/" + viper.GetString("gk_folder")
 	}
@@ -161,6 +165,9 @@ func getImportPath(name string, key string) (string, error) {
 		}
 	}
 	var importPath string
+	// Change: here should not use os.Getwd() as projectPath
+	// Desc:If can't pass go test, on windows, projectPath will be "c:/User/xxx/...", this will cause err certainly.
+	projectPath = ""
 	if projectPath == "" {
 		importPath = path
 	} else {
@@ -201,4 +208,9 @@ func getModNameFromModFile(name string) (string, error) {
 		return modNameArr[1], nil
 	}
 	return "", nil
+}
+
+func IsExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || os.IsExist(err)
 }
