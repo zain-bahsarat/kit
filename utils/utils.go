@@ -166,7 +166,7 @@ func getImportPath(name string, key string) (string, error) {
 	}
 	var importPath string
 	// Change: here should not use os.Getwd() as projectPath
-	// Desc:If can't pass go test, on windows, projectPath will be "c:/User/xxx/...", this will cause err certainly.
+	// Desc:It can't pass go test, on windows, projectPath will be "c:/User/xxx/...", this will cause err certainly.
 	projectPath = ""
 	if projectPath == "" {
 		importPath = path

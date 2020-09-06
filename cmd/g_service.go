@@ -23,17 +23,19 @@ var initserviceCmd = &cobra.Command{
 				return
 			}
 		}
+		// pbPath,pbImportPath only work when transport is grpc
 		var pbPath, pbImportPath string
 		pbPath = viper.GetString("g_s_pb_path")
 		pbImportPath = viper.GetString("g_s_pb_import_path")
 		if pbPath != "" {
 			exist := utils.IsExist(pbPath)
 			if !exist {
-				logrus.Errorf("You must provide a existed pb path to store pb dir, given path:<%s> is not exist", pbPath)
+				logrus.Errorf("You must provide a existed pb path to put pb dir, given path:<%s> does not exist", pbPath)
 				return
 			}
+			// The pbImportPath validity is not checked here, and it is the responsibility of the developer
 			if pbImportPath == "" {
-				logrus.Error("You must provide pb import path by --pb_import_path or -i, because you provide a pb_path")
+				logrus.Error("You must provide pb import path by --pb_import_path or -i, because you have provided pb_path")
 				return
 			}
 		}
