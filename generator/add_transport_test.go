@@ -74,7 +74,7 @@ func TestNewGenerateTransport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewGenerateTransport(tt.args.name, tt.args.gorillaMux, tt.args.transport, tt.args.methods); !reflect.DeepEqual(got, tt.want) {
+			if got := NewGenerateTransport(tt.args.name, tt.args.gorillaMux, tt.args.transport, "", "", tt.args.methods); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewGenerateTransport() = %v, want %v", got, tt.want)
 			}
 		})
@@ -837,6 +837,7 @@ func Test_generateHTTPTransportBase_Generate(t *testing.T) {
 func Test_newGenerateGRPCTransportProto(t *testing.T) {
 	type args struct {
 		name             string
+		pbPath           string
 		serviceInterface parser.Interface
 		methods          []string
 	}
@@ -849,7 +850,7 @@ func Test_newGenerateGRPCTransportProto(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newGenerateGRPCTransportProto(tt.args.name, tt.args.serviceInterface, tt.args.methods); !reflect.DeepEqual(got, tt.want) {
+			if got := newGenerateGRPCTransportProto(tt.args.name, tt.args.pbPath, tt.args.serviceInterface, tt.args.methods); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newGenerateGRPCTransportProto() = %v, want %v", got, tt.want)
 			}
 		})
@@ -1021,6 +1022,7 @@ func Test_generateGRPCTransportProto_getServiceRPC(t *testing.T) {
 func Test_newGenerateGRPCTransportBase(t *testing.T) {
 	type args struct {
 		name             string
+		pbImportPath     string
 		serviceInterface parser.Interface
 		methods          []string
 		allMethods       []parser.Method
@@ -1034,7 +1036,7 @@ func Test_newGenerateGRPCTransportBase(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newGenerateGRPCTransportBase(tt.args.name, tt.args.serviceInterface, tt.args.methods, tt.args.allMethods); !reflect.DeepEqual(got, tt.want) {
+			if got := newGenerateGRPCTransportBase(tt.args.name, tt.args.pbImportPath, tt.args.serviceInterface, tt.args.methods, tt.args.allMethods); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newGenerateGRPCTransportBase() = %v, want %v", got, tt.want)
 			}
 		})
@@ -1085,6 +1087,7 @@ func Test_generateGRPCTransportBase_Generate(t *testing.T) {
 func Test_newGenerateGRPCTransport(t *testing.T) {
 	type args struct {
 		name             string
+		pbImportPath     string
 		serviceInterface parser.Interface
 		methods          []string
 	}
@@ -1097,7 +1100,7 @@ func Test_newGenerateGRPCTransport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newGenerateGRPCTransport(tt.args.name, tt.args.serviceInterface, tt.args.methods); !reflect.DeepEqual(got, tt.want) {
+			if got := newGenerateGRPCTransport(tt.args.name, tt.args.pbImportPath, tt.args.serviceInterface, tt.args.methods); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newGenerateGRPCTransport() = %v, want %v", got, tt.want)
 			}
 		})

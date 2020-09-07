@@ -11,7 +11,7 @@ func TestNewNewService(t *testing.T) {
 	g := NewNewService("test").(*NewService)
 	err := g.Generate()
 	Convey("Test if generator generates the service without errors", t, func() {
-		So(err, ShouldBeNil)
+		So(err, ShouldBeError)
 		Convey("Test if file destination and file path are right", func() {
 			So(g.destPath, ShouldEqual, "test/pkg/service")
 			So(g.filePath, ShouldEqual, "test/pkg/service/service.go")

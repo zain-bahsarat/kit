@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"path"
@@ -58,6 +59,7 @@ func (g *NewService) Generate() error {
 		g.interfaceName,
 		[]jen.Code{partial.Raw()},
 	)
+
 	return g.fs.WriteFile(g.filePath, g.srcFile.GoString(), false)
 }
 
@@ -72,11 +74,19 @@ func (g *NewService) genModule() error {
 	if viper.GetString("n_s_module") != "" {
 		moduleName = viper.GetString("n_s_module")
 		moduleNameSlice := strings.Split(moduleName, "/")
-		moduleNameSlice[len(moduleNameSlice) - 1] = utils.ToLowerSnakeCase(moduleNameSlice[len(moduleNameSlice) - 1])
+		moduleNameSlice[len(moduleNameSlice)-1] = utils.ToLowerSnakeCase(moduleNameSlice[len(moduleNameSlice)-1])
 		moduleName = strings.Join(moduleNameSlice, "/")
 	}
 	cmdStr := "cd " + prjName + " && go mod init " + moduleName
 	cmd := exec.Command("sh", "-c", cmdStr)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
 	_, err := cmd.Output()
-	return err
+	// return cmd.Stderr to debug (err here provides nothing useful, only `exit status 1`)
+	if err != nil {
+		return fmt.Errorf("genModule: sh -c %s => err:%v", cmdStr, err.Error()+" , "+stderr.String())
+	}
+	return nil
 }

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"runtime"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -26,5 +27,17 @@ func TestToLowerSnakeCase(t *testing.T) {
 func TestToUpperFirst(t *testing.T) {
 	Convey("Test if ToUpperFirst works", t, func() {
 		So(ToUpperFirst("test"), ShouldEqual, "Test")
+	})
+}
+
+func TestIsExist(t *testing.T) {
+	invalidP := "/@^*(*(&%^&"
+	existedAbsoluteP := "c:"
+	if runtime.GOOS != "windows" {
+		existedAbsoluteP = "/etc"
+	}
+	Convey("Test if IsExist works", t, func() {
+		So(IsExist(invalidP), ShouldEqual, false)
+		So(IsExist(existedAbsoluteP), ShouldEqual, true)
 	})
 }

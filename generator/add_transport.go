@@ -33,6 +33,8 @@ type GenerateTransport struct {
 	gorillaMux       bool
 	interfaceName    string
 	destPath         string
+	pbPath           string
+	pbImportPath     string
 	methods          []string
 	filePath         string
 	file             *parser.File
@@ -40,7 +42,7 @@ type GenerateTransport struct {
 }
 
 // NewGenerateTransport returns a transport generator.
-func NewGenerateTransport(name string, gorillaMux bool, transport string, methods []string) Gen {
+func NewGenerateTransport(name string, gorillaMux bool, transport, pbPath, pbImportPath string, methods []string) Gen {
 	i := &GenerateTransport{
 		name:          name,
 		gorillaMux:    gorillaMux,
@@ -50,6 +52,10 @@ func NewGenerateTransport(name string, gorillaMux bool, transport string, method
 	}
 	i.filePath = path.Join(i.destPath, viper.GetString("gk_service_file_name"))
 	i.transport = transport
+	// Customize pb path
+	i.pbPath = pbPath
+	i.pbImportPath = pbImportPath
+
 	// Not used.
 	i.srcFile = jen.NewFilePath("")
 	i.InitPg()
@@ -99,17 +105,17 @@ func (g *GenerateTransport) Generate() (err error) {
 			return err
 		}
 	case "grpc":
-		gp := newGenerateGRPCTransportProto(g.name, g.serviceInterface, g.methods)
+		gp := newGenerateGRPCTransportProto(g.name, g.pbPath, g.serviceInterface, g.methods)
 		err = gp.Generate()
 		if err != nil {
 			return err
 		}
-		gt := newGenerateGRPCTransport(g.name, g.serviceInterface, g.methods)
+		gt := newGenerateGRPCTransport(g.name, g.pbImportPath, g.serviceInterface, g.methods)
 		err = gt.Generate()
 		if err != nil {
 			return err
 		}
-		gb := newGenerateGRPCTransportBase(g.name, g.serviceInterface, g.methods, mth)
+		gb := newGenerateGRPCTransportBase(g.name, g.pbImportPath, g.serviceInterface, g.methods, mth)
 		err = gb.Generate()
 		if err != nil {
 			return err
@@ -212,7 +218,8 @@ func (g *generateHTTPTransport) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	endpImports, err := utils.GetEndpointImportPath(g.name)
+	endpointImport, err := utils.GetEndpointImportPath(g.name)
+	defer func() { recover() }()
 	if err != nil {
 		return err
 	}
@@ -320,7 +327,7 @@ func (g *generateHTTPTransport) Generate() (err error) {
 				nil,
 				[]jen.Code{
 					param,
-					jen.Id("endpoints").Qual(endpImports, "Endpoints"),
+					jen.Id("endpoints").Qual(endpointImport, "Endpoints"),
 					jen.Id("options").Index().Qual(
 						"github.com/go-kit/kit/transport/http",
 						"ServerOption",
@@ -352,7 +359,7 @@ func (g *generateHTTPTransport) Generate() (err error) {
 					jen.Error(),
 				},
 				"",
-				jen.Id("req").Op(":=").Qual(endpImports, m.Name+"Request").Block(),
+				jen.Id("req").Op(":=").Qual(endpointImport, m.Name+"Request").Block(),
 				jen.Err().Op(":=").Qual("encoding/json", "NewDecoder").Call(
 					jen.Id("r").Dot("Body"),
 				).Dot("Decode").Call(jen.Id("&req")),
@@ -373,7 +380,7 @@ func (g *generateHTTPTransport) Generate() (err error) {
 					jen.If(
 						jen.List(jen.Id("f"), jen.Id("ok")).Op(":=").Id("response.").Call(
 							jen.Qual(
-								endpImports,
+								endpointImport,
 								"Failure",
 							),
 						).Id(";").Id("ok").Id("&&").Id("f").Dot("Failed").Call().Op("!=").Nil(),
@@ -643,13 +650,16 @@ type generateGRPCTransportProto struct {
 	serviceInterface  parser.Interface
 }
 
-func newGenerateGRPCTransportProto(name string, serviceInterface parser.Interface, methods []string) Gen {
+func newGenerateGRPCTransportProto(name, pbPath string, serviceInterface parser.Interface, methods []string) Gen {
 	t := &generateGRPCTransportProto{
 		name:             name,
 		methods:          methods,
 		interfaceName:    utils.ToCamelCase(name + "Service"),
 		destPath:         fmt.Sprintf(viper.GetString("gk_grpc_pb_path_format"), utils.ToLowerSnakeCase(name)),
 		serviceInterface: serviceInterface,
+	}
+	if pbPath != "" {
+		t.destPath = path.Join(pbPath, "pb")
 	}
 	t.pbFilePath = path.Join(
 		t.destPath,
@@ -858,6 +868,7 @@ type generateGRPCTransportBase struct {
 	methods          []string
 	allMethods       []parser.Method
 	interfaceName    string
+	pbImportPath     string
 	destPath         string
 	filePath         string
 	file             *parser.File
@@ -865,7 +876,7 @@ type generateGRPCTransportBase struct {
 	serviceInterface parser.Interface
 }
 
-func newGenerateGRPCTransportBase(name string, serviceInterface parser.Interface, methods []string, allMethods []parser.Method) Gen {
+func newGenerateGRPCTransportBase(name, pbImportPath string, serviceInterface parser.Interface, methods []string, allMethods []parser.Method) Gen {
 	t := &generateGRPCTransportBase{
 		name:             name,
 		methods:          methods,
@@ -877,6 +888,7 @@ func newGenerateGRPCTransportBase(name string, serviceInterface parser.Interface
 	t.filePath = path.Join(t.destPath, viper.GetString("gk_grpc_base_file_name"))
 	t.grpcFilePath = path.Join(t.destPath, viper.GetString("gk_grpc_file_name"))
 	t.srcFile = jen.NewFilePath(t.destPath)
+	t.pbImportPath = pbImportPath
 	t.InitPg()
 	t.fs = fs.Get()
 	return t
@@ -891,7 +903,7 @@ func (g *generateGRPCTransportBase) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	pbImport, err := utils.GetPbImportPath(g.name)
+	pbImport, err := utils.GetPbImportPath(g.name, g.pbImportPath)
 	if err != nil {
 		return err
 	}
@@ -963,13 +975,14 @@ type generateGRPCTransport struct {
 	methods           []string
 	interfaceName     string
 	destPath          string
+	pbImportPath      string
 	generateFirstTime bool
 	file              *parser.File
 	filePath          string
 	serviceInterface  parser.Interface
 }
 
-func newGenerateGRPCTransport(name string, serviceInterface parser.Interface, methods []string) Gen {
+func newGenerateGRPCTransport(name, pbImportPath string, serviceInterface parser.Interface, methods []string) Gen {
 	t := &generateGRPCTransport{
 		name:             name,
 		methods:          methods,
@@ -979,6 +992,7 @@ func newGenerateGRPCTransport(name string, serviceInterface parser.Interface, me
 	}
 	t.filePath = path.Join(t.destPath, viper.GetString("gk_grpc_file_name"))
 	t.srcFile = jen.NewFilePath(t.destPath)
+	t.pbImportPath = pbImportPath
 	t.InitPg()
 	t.fs = fs.Get()
 	return t
@@ -992,7 +1006,7 @@ func (g *generateGRPCTransport) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	pbImport, err := utils.GetPbImportPath(g.name)
+	pbImport, err := utils.GetPbImportPath(g.name, g.pbImportPath)
 	if err != nil {
 		return err
 	}

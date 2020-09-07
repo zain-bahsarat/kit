@@ -22,6 +22,8 @@ type GenerateService struct {
 	pg                                   *PartialGenerator
 	name                                 string
 	transport                            string
+	pbPath                               string
+	pbImportPath                         string
 	interfaceName                        string
 	serviceStructName                    string
 	destPath                             string
@@ -33,7 +35,7 @@ type GenerateService struct {
 }
 
 // NewGenerateService returns a initialized and ready generator.
-func NewGenerateService(name, transport string, sMiddleware, gorillaMux, eMiddleware bool, methods []string) Gen {
+func NewGenerateService(name, transport, pbPath, pbImportPath string, sMiddleware, gorillaMux, eMiddleware bool, methods []string) Gen {
 	i := &GenerateService{
 		name:          name,
 		interfaceName: utils.ToCamelCase(name + "Service"),
@@ -47,6 +49,10 @@ func NewGenerateService(name, transport string, sMiddleware, gorillaMux, eMiddle
 	i.pg = NewPartialGenerator(nil)
 	i.serviceStructName = utils.ToLowerFirstCamelCase(viper.GetString("gk_service_struct_prefix") + "-" + i.interfaceName)
 	i.transport = transport
+	i.pbPath = pbPath
+	// If the `pbPath` was provided, the path to import pb will so difficult to determinate, so only pass it by flag directly.
+	i.pbImportPath = pbImportPath
+
 	// Not used.
 	i.srcFile = jen.NewFilePath("")
 	i.InitPg()
@@ -112,7 +118,7 @@ func (g *GenerateService) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	tp := NewGenerateTransport(g.name, g.gorillaMux, g.transport, g.methods)
+	tp := NewGenerateTransport(g.name, g.gorillaMux, g.transport, g.pbPath, g.pbImportPath, g.methods)
 	err = tp.Generate()
 	if err != nil {
 		return err
@@ -122,7 +128,7 @@ func (g *GenerateService) Generate() (err error) {
 	if err != nil {
 		return err
 	}
-	mG := newGenerateCmd(g.name, g.serviceInterface, g.sMiddleware, g.eMiddleware, g.methods)
+	mG := newGenerateCmd(g.name, g.pbImportPath, g.serviceInterface, g.sMiddleware, g.eMiddleware, g.methods)
 	return mG.Generate()
 }
 func (g *GenerateService) generateServiceMethods() {
@@ -1475,6 +1481,7 @@ type generateCmd struct {
 	file                               *parser.File
 	interfaceName                      string
 	destPath                           string
+	pbImportPath                       string
 	filePath                           string
 	httpDestPath                       string
 	grpcDestPath                       string
@@ -1485,7 +1492,7 @@ type generateCmd struct {
 	serviceInterface                   parser.Interface
 }
 
-func newGenerateCmd(name string, serviceInterface parser.Interface,
+func newGenerateCmd(name, pbImportPath string, serviceInterface parser.Interface,
 	generateSacDefaultsMiddleware bool, generateEndpointDefaultsMiddleware bool, methods []string) Gen {
 	t := &generateCmd{
 		name:                               name,
@@ -1502,6 +1509,7 @@ func newGenerateCmd(name string, serviceInterface parser.Interface,
 	t.httpFilePath = path.Join(t.httpDestPath, viper.GetString("gk_http_file_name"))
 	t.grpcFilePath = path.Join(t.grpcDestPath, viper.GetString("gk_grpc_file_name"))
 	t.srcFile = jen.NewFile("service")
+	t.pbImportPath = pbImportPath
 	t.InitPg()
 	t.fs = fs.Get()
 	return t
@@ -1733,7 +1741,7 @@ func (g *generateCmd) generateRun() (*PartialGenerator, error) {
 		),
 		jen.Defer().Qual(
 			"github.com/lightstep/lightstep-tracer-go", "Flush",
-		).Call(jen.Qual("context","Background").Call(), jen.Id("tracer")),
+		).Call(jen.Qual("context", "Background").Call(), jen.Id("tracer")),
 	).Else().If(jen.Id("*appdashAddr").Op("!=").Lit("")).Block(
 		jen.Id("logger").Dot("Log").Call(
 			jen.Lit("tracer"),
@@ -1946,7 +1954,7 @@ func (g *generateCmd) generateInitGRPC() (err error) {
 	if err != nil {
 		return err
 	}
-	pbImport, err := utils.GetPbImportPath(g.name)
+	pbImport, err := utils.GetPbImportPath(g.name, g.pbImportPath)
 	if err != nil {
 		return err
 	}
