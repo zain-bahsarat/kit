@@ -145,10 +145,10 @@ func (g *GenerateTransport) serviceFound() bool {
 func (g *GenerateTransport) removeBadMethods() {
 	keepMethods := []parser.Method{}
 	for _, v := range g.serviceInterface.Methods {
-		if string(v.Name[0]) == strings.ToLower(string(v.Name[0])) {
-			logrus.Warnf("The method '%s' is private and will be ignored", v.Name)
-			continue
-		}
+// 		if string(v.Name[0]) == strings.ToLower(string(v.Name[0])) {
+// 			logrus.Warnf("The method '%s' is private and will be ignored", v.Name)
+// 			continue
+// 		}
 		if len(v.Results) == 0 {
 			logrus.Warnf("The method '%s' does not have any return value and will be ignored", v.Name)
 			continue
